@@ -11,23 +11,23 @@ CORS(app)
 
 # ── COLORS ───────────────────────────────────────────────────
 FILLS = {
-    'inp':     PatternFill('solid', start_color='DBEAFE'),
-    'nurs':    PatternFill('solid', start_color='DCFCE7'),
-    'pc':      PatternFill('solid', start_color='D1FAE5'),
-    'ed':      PatternFill('solid', start_color='FEF9C3'),
-    'sub':     PatternFill('solid', start_color='EDE9FE'),
-    'math':    PatternFill('solid', start_color='FCE7F3'),
-    'hol':     PatternFill('solid', start_color='F3F4F6'),
-    'or':      PatternFill('solid', start_color='F1F5F9'),
-    'shelf':   PatternFill('solid', start_color='FEE2E2'),
-    'read':    PatternFill('solid', start_color='FFF7ED'),
+    'inp':     PatternFill('solid', start_color='FEF9C3'),  # yellow
+    'nurs':    PatternFill('solid', start_color='DCFCE7'),  # green
+    'pc':      PatternFill('solid', start_color='D1FAE5'),  # mint
+    'ed':      PatternFill('solid', start_color='DBEAFE'),  # blue
+    'sub':     PatternFill('solid', start_color='EDE9FE'),  # purple
+    'math':    PatternFill('solid', start_color='FCE7F3'),  # pink
+    'hol':     PatternFill('solid', start_color='F3F4F6'),  # gray
+    'or':      PatternFill('solid', start_color='F1F5F9'),  # light
+    'shelf':   PatternFill('solid', start_color='FEE2E2'),  # red
+    'read':    PatternFill('solid', start_color='FFF7ED'),  # orange
     'hdr':     PatternFill('solid', start_color='1A1A1A'),
     'col_hdr': PatternFill('solid', start_color='E8E8E5'),
     'sec_hdr': PatternFill('solid', start_color='374151'),
     'wknd':    PatternFill('solid', start_color='F0FDF4'),
 }
 FONT_COLORS = {
-    'inp':'1E40AF','nurs':'15803D','pc':'065F46','ed':'854D0E',
+    'inp':'854D0E','nurs':'15803D','pc':'065F46','ed':'1E40AF',
     'sub':'5B21B6','math':'9D174D','hol':'6B7280','or':'475569',
     'shelf':'991B1B','read':'9A3412','hdr':'FFFFFF','col_hdr':'374151',
     'sec_hdr':'FFFFFF','wknd':'166534',
@@ -159,7 +159,7 @@ def build_excel(data):
     for gid in group_order:
         grp=by_group.get(gid,[])
         if not grp: continue
-        sheet_name=(GROUP_LABELS.get(gid,gid)).replace('/','&').replace('  ',' ')[:31]
+        sheet_name=(GROUP_LABELS.get(gid,gid)).replace('/','-').replace('  ',' ')[:31]
         ws=wb.create_sheet(sheet_name)
         ws.column_dimensions['A'].width=12
         for c in range(2,8): ws.column_dimensions[get_column_letter(c)].width=20
