@@ -159,7 +159,7 @@ def build_excel(data):
     for gid in group_order:
         grp=by_group.get(gid,[])
         if not grp: continue
-        sheet_name=(GROUP_LABELS.get(gid,gid))[:31]
+        sheet_name=(GROUP_LABELS.get(gid,gid)).replace('/','&').replace('  ',' ')[:31]
         ws=wb.create_sheet(sheet_name)
         ws.column_dimensions['A'].width=12
         for c in range(2,8): ws.column_dimensions[get_column_letter(c)].width=20
