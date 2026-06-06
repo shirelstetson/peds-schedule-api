@@ -1,4 +1,3 @@
- PY
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from openpyxl import Workbook
@@ -6,10 +5,10 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from datetime import datetime, timedelta
 import io
- 
+
 app = Flask(__name__)
 CORS(app)
- 
+
 # ── COLORS ───────────────────────────────────────────────────
 FILLS = {
     'inp':     PatternFill('solid', start_color='FEF9C3'),  # yellow
@@ -33,7 +32,7 @@ FONT_COLORS = {
     'shelf':'991B1B','read':'9A3412','hdr':'FFFFFF','col_hdr':'374151',
     'sec_hdr':'FFFFFF','wknd':'166534',
 }
- 
+
 def rkey(v):
     if not v: return 'or'
     if 'Inpatient' in v: return 'inp'
@@ -46,12 +45,12 @@ def rkey(v):
     if 'Shelf' in v:     return 'shelf'
     if 'Reading' in v:   return 'read'
     return 'or'
- 
+
 thin = Side(style='thin', color='CCCCCC')
 med  = Side(style='medium', color='999999')
 def border(): return Border(left=thin,right=thin,top=thin,bottom=thin)
 def med_border(): return Border(left=med,right=med,top=med,bottom=med)
- 
+
 def sc(ws, row, col, value, key='or', bold=False, size=10, halign='center', wrap=False):
     c = ws.cell(row=row, column=col, value=value)
     c.fill = FILLS.get(key, FILLS['or'])
@@ -59,29 +58,29 @@ def sc(ws, row, col, value, key='or', bold=False, size=10, halign='center', wrap
     c.alignment = Alignment(horizontal=halign, vertical='center', wrap_text=wrap)
     c.border = border()
     return c
- 
+
 def pc(ws, row, col, value, bold=False, size=10, halign='left'):
     c = ws.cell(row=row, column=col, value=value)
     c.font = Font(name='Arial', size=size, bold=bold)
     c.alignment = Alignment(horizontal=halign, vertical='center')
     return c
- 
+
 def get_date(iso, wi, di):
     d = datetime.strptime(iso, '%Y-%m-%d') + timedelta(weeks=wi, days=di)
     return d
- 
+
 def week_dates(iso, wi):
     d = get_date(iso, wi, 0)
     e = get_date(iso, wi, 4)
     return f"{d.month}/{d.day}–{e.month}/{e.day}"
- 
+
 def wed_date(iso, wi):
     d = get_date(iso, wi, 2)
     return f"{d.month}/{d.day}"
- 
+
 def day_iso(iso, wi, di):
     return get_date(iso, wi, di).strftime('%Y-%m-%d')
- 
+
 GROUP_LABELS = {
     'nbimc_all':'NBIMC (all 6 wks)',
     'nbimc_uh_ed':'NBIMC / UH ED',
@@ -90,7 +89,7 @@ GROUP_LABELS = {
     'uh_cbmc_both':'UH / CBMC Inp + Sub',
     'overflow':'Overflow',
 }
- 
+
 TIMING = {
     'NBIMC Inpatient':'6:30am sign-out–5pm weekdays; 6:30am–6:30pm short-call; weekends 8am–4pm',
     'CBMC Inpatient':'6:30am–4pm weekdays; 6:30am–6:30pm short-call; weekends 8am–4pm',
@@ -104,7 +103,7 @@ TIMING = {
     'UH Subspecialty':'DOC 4300 · 9am–5pm',
     'CBMC Subspecialty':'See CBMC Schedule (contact Karen Feniello)',
 }
- 
+
 def build_excel(data):
     students   = data['students']
     start_iso  = data['startISO']
@@ -112,10 +111,10 @@ def build_excel(data):
     shelf_date = data.get('shelfDate','')
     math_weeks = data['mathWeeks']  # 0-indexed
     holiday_dates = set(data.get('holidayDates', []))
- 
+
     wb = Workbook()
     wb.remove(wb.active)
- 
+
     # ── 1. STUDENT LIST ──────────────────────────────────────
     ws = wb.create_sheet('Student List')
     ws.column_dimensions['A'].width = 6
@@ -129,7 +128,7 @@ def build_excel(data):
         pc(ws,i,3,s['groupLabel'])
         for col in range(1,4): ws.cell(row=i,column=col).border=border()
     ws.freeze_panes='A2'
- 
+
     # ── 2. OVERVIEW ──────────────────────────────────────────
     ws = wb.create_sheet('Overview')
     ws.column_dimensions['A'].width=5
@@ -149,14 +148,14 @@ def build_excel(data):
             label=primary+(' + Matheny' if has_math else '')
             sc(ws,i,4+wi,label,rkey(primary),size=9)
     ws.freeze_panes='D2'
- 
+
     # ── 3. INDIVIDUAL SCHEDULE SHEETS by group ───────────────
     DAY_HDRS=['Dates','Monday','Tuesday','Wednesday','Thursday','Friday','Weekend Call']
     group_order=['nbimc_all','nbimc_uh_ed','nbimc_cbmc_sub','uh_cbmc_inp','uh_cbmc_both','overflow']
     from collections import defaultdict
     by_group=defaultdict(list)
     for s in students: by_group[s['group']].append(s)
- 
+
     for gid in group_order:
         grp=by_group.get(gid,[])
         if not grp: continue
@@ -164,7 +163,7 @@ def build_excel(data):
         ws=wb.create_sheet(sheet_name)
         ws.column_dimensions['A'].width=12
         for c in range(2,8): ws.column_dimensions[get_column_letter(c)].width=20
- 
+
         row=1
         for s in grp:
             # Name header
@@ -173,19 +172,19 @@ def build_excel(data):
             c.alignment=Alignment(horizontal='left',vertical='center')
             ws.merge_cells(start_row=row,start_column=1,end_row=row,end_column=7)
             ws.row_dimensions[row].height=18; row+=1
- 
+
             # Group label
             c2=ws.cell(row=row,column=1,value=s['groupLabel'])
             c2.fill=FILLS['col_hdr']; c2.font=Font(name='Arial',size=9,color='6B7280')
             c2.alignment=Alignment(horizontal='left',vertical='center')
             ws.merge_cells(start_row=row,start_column=1,end_row=row,end_column=7)
             row+=1
- 
+
             # Column headers
             for col,h in enumerate(DAY_HDRS,1):
                 sc(ws,row,col,h,'col_hdr',bold=True,size=9)
             row+=1
- 
+
             # 6 week rows
             for wi,wk in enumerate(s['weeks']):
                 dates=week_dates(start_iso,wi)
@@ -200,7 +199,7 @@ def build_excel(data):
                 wknd=wk[5] if len(wk)>5 else ''
                 sc(ws,row,7,wknd,'wknd' if wknd else 'or',size=9)
                 ws.row_dimensions[row].height=28; row+=1
- 
+
             # Timing sidebar (col 9+)
             seen=set()
             for wk in s['weeks']:
@@ -218,9 +217,9 @@ def build_excel(data):
                 tr+=1
             ws.column_dimensions['I'].width=22
             ws.column_dimensions['J'].width=40
- 
+
             row+=1  # blank between students
- 
+
     # ── 4. MATHENY SCHEDULE ──────────────────────────────────
     ws=wb.create_sheet('Matheny Schedule')
     ws.column_dimensions['A'].width=26
@@ -244,7 +243,7 @@ def build_excel(data):
             c.font=Font(name='Arial',size=10)
             c.border=border()
             c.alignment=Alignment(horizontal='left',vertical='center')
- 
+
     # ── 5. SECTION DATES ─────────────────────────────────────
     SITE_ROTS={
         'NBIMC':['NBIMC Inpatient','NBIMC Nursery','NBIMC PC','NBIMC ED','NBIMC Subspecialty'],
@@ -257,19 +256,19 @@ def build_excel(data):
         ws.column_dimensions['B'].width=14
         for c in range(3,15): ws.column_dimensions[get_column_letter(c)].width=20
         cur=1
- 
+
         for rot in rots:
             is_inp='Inpatient' in rot
             is_ed=' ED' in rot
             k=rkey(rot)
- 
+
             # Section header
             c=ws.cell(row=cur,column=1,value=rot)
             c.fill=FILLS['sec_hdr']; c.font=Font(name='Arial',size=11,bold=True,color='FFFFFF')
             c.alignment=Alignment(horizontal='left',vertical='center')
             ws.merge_cells(start_row=cur,start_column=1,end_row=cur,end_column=10)
             cur+=1
- 
+
             if is_inp:
                 # Header
                 sc(ws,cur,1,'Weeks','col_hdr',bold=True,size=9,halign='left')
@@ -300,7 +299,7 @@ def build_excel(data):
                     sc(ws,cur,2,'Dates','col_hdr',bold=True,size=9)
                     for ci in range(max(max_n,1)): sc(ws,cur,3+ci,rot,'col_hdr',bold=True,size=9)
                     cur+=1
- 
+
                 for wi in range(6):
                     in_wk=[s for s in students if any(rot in c2 for c2 in s['weeks'][wi])]
                     if not in_wk: continue
@@ -314,14 +313,14 @@ def build_excel(data):
                     else:
                         for ci,s in enumerate(in_wk): sc(ws,cur,3+ci,s['name'],k,size=9,halign='left')
                     cur+=1
- 
+
             # Timing note
             if rot in TIMING:
                 c=ws.cell(row=cur,column=1,value=f"{rot}: {TIMING[rot]}")
                 c.font=Font(name='Arial',size=8,italic=True,color='6B7280')
                 ws.merge_cells(start_row=cur,start_column=1,end_row=cur,end_column=10)
             cur+=2  # blank row between sections
- 
+
     # ── WEEKEND CALL SHEET ──────────────────────────────────
     ws=wb.create_sheet('Weekend Call')
     ws.column_dimensions['A'].width=26
@@ -350,7 +349,7 @@ def build_excel(data):
         for col,val in enumerate([s['name'],s['groupLabel'],inp_site+' Inpatient',call_wk_label,call_day],1):
             sc(ws,row,col,val,k if col==5 else 'or',size=9,halign='left')
         row+=1
- 
+
     # ── WEEKDAY CALL SHEET ───────────────────────────────────
     ws=wb.create_sheet('Weekday Call')
     for col,h in enumerate(['Student','Group','Inpatient Site','Inpatient Week 1','Call Day Wk1','Inpatient Week 2','Call Day Wk2'],1):
@@ -386,12 +385,12 @@ def build_excel(data):
         for col,val in enumerate(vals,1):
             sc(ws,row,col,val,'inp' if col in (5,7) else 'or',size=9,halign='left')
         row+=1
- 
+
     buf=io.BytesIO()
     wb.save(buf)
     buf.seek(0)
     return buf
- 
+
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
@@ -403,10 +402,10 @@ def generate():
                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     except Exception as e:
         return jsonify({'error':str(e)}), 500
- 
+
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status':'ok'})
- 
+
 if __name__=='__main__':
     app.run(debug=False, host='0.0.0.0', port=5000)
